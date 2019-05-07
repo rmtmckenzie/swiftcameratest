@@ -1,0 +1,22 @@
+PODS:
+  - Flutter (1.0.0)
+  - swiftcamera (0.0.1):
+    - Flutter
+
+DEPENDENCIES:
+  - Flutter (from `.symlinks/flutter/ios`)
+  - swiftcamera (from `.symlinks/plugins/swiftcamera/ios`)
+
+EXTERNAL SOURCES:
+  Flutter:
+    :path: ".symlinks/flutter/ios"
+  swiftcamera:
+    :path: ".symlinks/plugins/swiftcamera/ios"
+
+SPEC CHECKSUMS:
+  Flutter: 58dd7d1b27887414a370fcccb9e645c08ffd7a6a
+  swiftcamera: 6863a0c4847a03ba8d2a23da948ec4effdb78289
+
+PODFILE CHECKSUM: b78b74890ab9dedba2c632d6c634c6fbd827874c
+
+COCOAPODS: 1.6.1
