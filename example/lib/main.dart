@@ -21,11 +21,11 @@ class _MyAppState extends State<MyApp> {
 
     cameraController.addListener(onCameraValueChanged);
 
-    (() async {
-      await cameraController.startPreview();
-
-      print("Camera preview started!");
-    })();
+//    (() async {
+//      await cameraController.startPreview();
+//
+//      print("Camera preview started!");
+//    })();
   }
 
   @override
@@ -36,22 +36,34 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    print("Building with controller value ${cameraController.value}");
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
           title: const Text('Plugin example app'),
         ),
         body: Center(
-            child: AspectRatio(
-          aspectRatio: 4 / 3,
-          child: cameraController.value.isStreaming
-              ? Container(
-                  color: Colors.black,
-                )
-              : Texture(
-                  textureId: cameraController.value.textureId,
-                ),
-        )),
+          child: AspectRatio(
+            aspectRatio: 4 / 3,
+            child: cameraController.value.isStreaming
+                ? Texture(
+                    textureId: cameraController.value.textureId,
+                  )
+                : Container(
+                    color: Colors.black,
+                  ),
+          ),
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            if (cameraController.value.isStreaming) {
+              cameraController.stopPreview();
+            } else {
+              cameraController.startPreview();
+            }
+          },
+          child: Icon(cameraController.value.isStreaming ? Icons.stop : Icons.camera),
+        ),
       ),
     );
   }

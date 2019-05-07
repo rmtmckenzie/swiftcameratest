@@ -12,12 +12,12 @@ class SwiftCameraValue {
 
   const SwiftCameraValue.uninitialized() : this(isStreaming: false);
 
-  SwiftCameraValue copyWith(
-      {bool isStreaming, int textureId, Size previewSize}) {
+  SwiftCameraValue copyWith({bool isStreaming, int textureId, Size previewSize}) {
     return SwiftCameraValue(
-        isStreaming: isStreaming ?? this.isStreaming,
-        textureId: textureId ?? this.textureId,
-        previewSize: previewSize ?? this.previewSize);
+      isStreaming: isStreaming ?? this.isStreaming,
+      textureId: textureId ?? this.textureId,
+      previewSize: previewSize ?? this.previewSize,
+    );
   }
 
   @override
@@ -36,17 +36,26 @@ class SwiftCameraController extends ValueNotifier<SwiftCameraValue> {
       throw "Preview has already been started.";
     }
 
-    final Map<String, dynamic> reply =
-        await _channel.invokeMapMethod<String, dynamic>('startPreview');
+    final Map<String, dynamic> reply = await _channel.invokeMapMethod<String, dynamic>('startPreview');
 
     final textureId = reply['textureId'];
     final width = reply['width'];
     final height = reply['height'];
+
+    print("Started with texture $textureId, width $width, height $height");
 
     value = value.copyWith(
       isStreaming: true,
       textureId: textureId,
       previewSize: Size(width.toDouble(), height.toDouble()),
     );
+  }
+
+  Future<void> stopPreview() async {
+    if (!value.isStreaming) {
+      throw "Preview has not been started.";
+    }
+
+    await _channel.invokeMethod('stopPreview');
   }
 }

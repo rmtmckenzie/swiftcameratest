@@ -16,7 +16,7 @@ public class SwiftSwiftCameraPlugin: NSObject, FlutterPlugin {
     registrar.addMethodCallDelegate(instance, channel: channel)
   }
 
-  let registrar: FlutterPluginRegistrar
+  unowned let registrar: FlutterPluginRegistrar
 
   init(registrar: FlutterPluginRegistrar) {
     self.registrar = registrar
@@ -26,33 +26,57 @@ public class SwiftSwiftCameraPlugin: NSObject, FlutterPlugin {
   var textureId: Int64?
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-    do{
       switch call.method {
       case "startPreview":
-        cameraHandler = try CameraHandler(())
-        textureId = registrar.textures().register(cameraHandler!)
-
-        cameraHandler!.start()
-        result(["textureId": textureId!, "width": cameraHandler!.previewDimensions.width, "height": cameraHandler!.previewDimensions.height])
+        
+        DispatchQueue.global(qos: .userInteractive).async {
+          do{
+            self.cameraHandler = try CameraHandler(())
+            unowned let textureRegistry = self.registrar.textures()
+            let textureId = textureRegistry.register(self.cameraHandler!)
+            self.textureId = textureId
+            
+            self.cameraHandler!.frameReady = { () in
+              textureRegistry.textureFrameAvailable(textureId)
+            }
+            
+            self.cameraHandler!.start()
+            
+            DispatchQueue.main.async {
+              result(["textureId": textureId, "width": self.cameraHandler!.previewDimensions.width, "height": self.cameraHandler!.previewDimensions.height])
+            }
+          } catch let error as CameraInitializeError {
+            switch error {
+            case .addingPreviewInputFailed:
+              result(FlutterError(code: "INIT_ERROR", message: "Adding preview input failed"))
+              break
+            case .addingPreviewConnectionFailed:
+              result(FlutterError(code: "INIT_ERROR", message: "Adding preview connection failed"))
+              break
+            case .addingPreviewOutputFailed:
+              result(FlutterError(code: "INIT_ERROR", message: "Adding preview output failed"))
+              break
+            case .cantOpenCamera(error: let nserr):
+              result(FlutterError(code: "INIT_ERROR", message: "Opening camera failed: \(nserr)"))
+              break
+            }
+          } catch {
+            DispatchQueue.main.async {
+              result(FlutterError(code: "UNKNOWN_ERROR", message: "Unknown error: \(error)."))
+            }
+          }
+        }
         break
       case "stopPreview":
         cameraHandler?.stop()
-        result()
+        cameraHandler?.frameReady = nil
+        cameraHandler = nil
+        result(nil)
         break;
       default:
         result(FlutterMethodNotImplemented)
       }
-    } catch CameraInitializeError.addingPreviewInputFailed {
-      result(FlutterError(code: "INIT_ERROR", message: "Adding preview input failed"))
-    } catch CameraInitializeError.addingPreviewConnectionFailed{
-      result(FlutterError(code: "INIT_ERROR", message: "Adding preview connection failed"))
-    } catch CameraInitializeError.addingPreviewOutputFailed {
-      result(FlutterError(code: "INIT_ERROR", message: "Adding preview output failed"))
-    } catch CameraInitializeError.cantOpenCamera(error: let error) {
-      result(FlutterError(code: "INIT_ERROR", message: "Opening camera failed: \(error)"))
-    } catch {
-      result(FlutterError(code: "UNKNOWN_ERROR", message: "Unknown error: \(error)."))
-    }
+ 
   }
 }
 
@@ -70,20 +94,23 @@ class CameraHandler: NSObject {
   let previewOutput: AVCaptureVideoDataOutput
   let previewConnection: AVCaptureConnection
   let previewDimensions: CMVideoDimensions
+  let queue = DispatchQueue(label: "cameraqueue", qos: .userInteractive)
 
   var buffer: CVImageBuffer?
+  var frameReady: (() -> ())?
 
   private init(session: AVCaptureSession, input: AVCaptureDeviceInput, previewOutput: AVCaptureVideoDataOutput, previewConnection: AVCaptureConnection, previewDimensions: CMVideoDimensions) {
     self.session = session
     self.input = input
     self.previewOutput = previewOutput
     self.previewConnection = previewConnection
+    self.previewDimensions = previewDimensions
 
     super.init()
 
     previewOutput.setSampleBufferDelegate(
       self,
-      queue: DispatchQueue.main
+      queue: queue
     )
   }
 
@@ -148,10 +175,15 @@ class CameraHandler: NSObject {
   }
 
   deinit {
-    session.removeInput(input)
+    session.inputs.forEach { (input) in
+      session.removeInput(input)
+    }
+    
+    session.outputs.forEach { (output) in
+      session.removeOutput(output)
+    }
+
     previewOutput.setSampleBufferDelegate(nil, queue: nil)
-    session.removeOutput(previewOutput)
-    session.removeConnection(previewConnection)
   }
 
   public func start() {
@@ -167,12 +199,14 @@ class CameraHandler: NSObject {
 extension CameraHandler: AVCaptureVideoDataOutputSampleBufferDelegate {
 
   func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+    print("Frame received.")
     guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
       //TODO: print error?
       print("Error getting image buffer from CMSamplebuffer.")
       return
     }
     buffer = imageBuffer
+    frameReady?()
   }
 
   func captureOutput(_ output: AVCaptureOutput, didDrop sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
