@@ -68,6 +68,10 @@ public class SwiftSwiftCameraPlugin: NSObject, FlutterPlugin {
         }
         break
       case "stopPreview":
+        if let textureId = textureId {
+          self.registrar.textures().unregisterTexture(textureId)
+        }
+        
         cameraHandler?.stop()
         cameraHandler?.frameReady = nil
         cameraHandler = nil
@@ -96,7 +100,7 @@ class CameraHandler: NSObject {
   let previewDimensions: CMVideoDimensions
   let queue = DispatchQueue(label: "cameraqueue", qos: .userInteractive)
 
-  var buffer: CVImageBuffer?
+  var buffer = AtomicNullableBox<CVImageBuffer>()
   var frameReady: (() -> ())?
 
   private init(session: AVCaptureSession, input: AVCaptureDeviceInput, previewOutput: AVCaptureVideoDataOutput, previewConnection: AVCaptureConnection, previewDimensions: CMVideoDimensions) {
@@ -175,15 +179,19 @@ class CameraHandler: NSObject {
   }
 
   deinit {
+    print("Removing inputs")
     session.inputs.forEach { (input) in
       session.removeInput(input)
     }
-    
+    print("Removing outputs")
+
     session.outputs.forEach { (output) in
       session.removeOutput(output)
     }
+    print("setting sample buffer delegate to nil")
 
     previewOutput.setSampleBufferDelegate(nil, queue: nil)
+    buffer.store(nil)
   }
 
   public func start() {
@@ -205,7 +213,7 @@ extension CameraHandler: AVCaptureVideoDataOutputSampleBufferDelegate {
       print("Error getting image buffer from CMSamplebuffer.")
       return
     }
-    buffer = imageBuffer
+    buffer.store(imageBuffer)
     frameReady?()
   }
 
@@ -218,7 +226,8 @@ extension CameraHandler: AVCaptureVideoDataOutputSampleBufferDelegate {
 extension CameraHandler: FlutterTexture {
 
   func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
-    return buffer != nil ? Unmanaged<CVPixelBuffer>.passRetained(buffer!) : nil
+    let imageBuffer = buffer.load()
+    return imageBuffer == nil ? nil : Unmanaged<CVPixelBuffer>.passRetained(imageBuffer!)
   }
 
 }

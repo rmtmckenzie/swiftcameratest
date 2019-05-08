@@ -1,11 +1,20 @@
 PODS:
+  - CNIOAtomics (2.0.0)
   - Flutter (1.0.0)
   - swiftcamera (0.0.1):
     - Flutter
+    - SwiftNIOConcurrencyHelpers
+  - SwiftNIOConcurrencyHelpers (2.0.0):
+    - CNIOAtomics (= 2.0.0)
 
 DEPENDENCIES:
   - Flutter (from `.symlinks/flutter/ios`)
   - swiftcamera (from `.symlinks/plugins/swiftcamera/ios`)
+
+SPEC REPOS:
+  https://github.com/cocoapods/specs.git:
+    - CNIOAtomics
+    - SwiftNIOConcurrencyHelpers
 
 EXTERNAL SOURCES:
   Flutter:
@@ -14,8 +23,10 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/swiftcamera/ios"
 
 SPEC CHECKSUMS:
+  CNIOAtomics: 740c1b1186b544f6aea3c5d70251cdcacac2131f
   Flutter: 58dd7d1b27887414a370fcccb9e645c08ffd7a6a
-  swiftcamera: 6863a0c4847a03ba8d2a23da948ec4effdb78289
+  swiftcamera: 44aaeb9e030c2c7a7178597329105937c48497c6
+  SwiftNIOConcurrencyHelpers: a79f8bb5ae0f342107b2f33b1764eb78891dcf54
 
 PODFILE CHECKSUM: b78b74890ab9dedba2c632d6c634c6fbd827874c
 

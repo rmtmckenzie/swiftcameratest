@@ -230,14 +230,18 @@
 			);
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks.sh",
+				"${BUILT_PRODUCTS_DIR}/CNIOAtomics/CNIOAtomics.framework",
 				"${PODS_ROOT}/../.symlinks/flutter/ios/Flutter.framework",
+				"${BUILT_PRODUCTS_DIR}/SwiftNIOConcurrencyHelpers/NIOConcurrencyHelpers.framework",
 				"${BUILT_PRODUCTS_DIR}/swiftcamera/swiftcamera.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 			);
 			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/CNIOAtomics.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Flutter.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/NIOConcurrencyHelpers.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/swiftcamera.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
