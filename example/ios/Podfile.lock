@@ -8,7 +8,7 @@ PODS:
     - CNIOAtomics (= 2.0.0)
 
 DEPENDENCIES:
-  - Flutter (from `.symlinks/flutter/ios`)
+  - Flutter (from `.symlinks/flutter/ios_debug`)
   - swiftcamera (from `.symlinks/plugins/swiftcamera/ios`)
 
 SPEC REPOS:
@@ -18,7 +18,7 @@ SPEC REPOS:
 
 EXTERNAL SOURCES:
   Flutter:
-    :path: ".symlinks/flutter/ios"
+    :path: ".symlinks/flutter/ios_debug"
   swiftcamera:
     :path: ".symlinks/plugins/swiftcamera/ios"
 

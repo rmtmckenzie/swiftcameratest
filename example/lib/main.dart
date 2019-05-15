@@ -34,6 +34,8 @@ class _MyAppState extends State<MyApp> {
     super.dispose();
   }
 
+  bool shouldShow = true;
+
   @override
   Widget build(BuildContext context) {
     print("Building with controller value ${cameraController.value}");
@@ -41,11 +43,17 @@ class _MyAppState extends State<MyApp> {
       home: Scaffold(
         appBar: AppBar(
           title: const Text('Plugin example app'),
+          actions: <Widget>[
+            Switch(
+              value: shouldShow,
+              onChanged: (newVal) => setState(() => shouldShow = newVal),
+            )
+          ],
         ),
         body: Center(
           child: AspectRatio(
             aspectRatio: 4 / 3,
-            child: cameraController.value.isStreaming
+            child: (cameraController.value.isStreaming && shouldShow)
                 ? Texture(
                     textureId: cameraController.value.textureId,
                   )
@@ -62,7 +70,8 @@ class _MyAppState extends State<MyApp> {
               cameraController.startPreview();
             }
           },
-          child: Icon(cameraController.value.isStreaming ? Icons.stop : Icons.camera),
+          child: Icon(
+              cameraController.value.isStreaming ? Icons.stop : Icons.camera),
         ),
       ),
     );

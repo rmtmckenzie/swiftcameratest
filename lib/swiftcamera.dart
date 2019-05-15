@@ -58,12 +58,14 @@ class SwiftCameraController extends ValueNotifier<SwiftCameraValue> {
       throw "Preview has not been started.";
     }
 
-    await _channel.invokeMethod('stopPreview');
-
+    // this has to be before calling stop since that
+    // deallocates the flutter texture
     value = value.copyWith(
       isStreaming: false,
-      textureId: null,
+//      textureId: null,
       previewSize: null,
     );
+
+    await _channel.invokeMethod('stopPreview');
   }
 }

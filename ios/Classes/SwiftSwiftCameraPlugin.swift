@@ -8,7 +8,7 @@ extension FlutterError {
   }
 }
 
-public class SwiftSwiftCameraPlugin: NSObject, FlutterPlugin {
+public class SwiftSwiftCameraPlugin: NSObject, FlutterPlugin /*, FlutterTexture*/ {
 
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(name: "swiftcamera", binaryMessenger: registrar.messenger())
@@ -20,10 +20,23 @@ public class SwiftSwiftCameraPlugin: NSObject, FlutterPlugin {
 
   init(registrar: FlutterPluginRegistrar) {
     self.registrar = registrar
+    super.init()
+
+//    unowned let textureRegistry = self.registrar.textures()
+//    let textureId = textureRegistry.register(self)
+//    self.textureId = textureId
   }
+
+//  deinit {
+//    registrar.textures().unregisterTexture(textureId)
+//  }
 
   var cameraHandler: CameraHandler?
   var textureId: Int64?
+
+  public func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
+    return cameraHandler?.copyPixelBuffer()
+  }
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
       switch call.method {
@@ -33,17 +46,19 @@ public class SwiftSwiftCameraPlugin: NSObject, FlutterPlugin {
           do{
             self.cameraHandler = try CameraHandler(())
             unowned let textureRegistry = self.registrar.textures()
-            let textureId = textureRegistry.register(self.cameraHandler!)
-            self.textureId = textureId
-            
+
+            let unownedTextureId = textureRegistry.register(self.cameraHandler!)
+            self.textureId = unownedTextureId
+//            let unownedTextureId: Int64 = self.textureId!
+
             self.cameraHandler!.frameReady = { () in
-              textureRegistry.textureFrameAvailable(textureId)
+              textureRegistry.textureFrameAvailable(unownedTextureId)
             }
             
             self.cameraHandler!.start()
             
             DispatchQueue.main.async {
-              result(["textureId": textureId, "width": self.cameraHandler!.previewDimensions.width, "height": self.cameraHandler!.previewDimensions.height])
+              result(["textureId": unownedTextureId, "width": self.cameraHandler!.previewDimensions.width, "height": self.cameraHandler!.previewDimensions.height])
             }
           } catch let error as CameraInitializeError {
             switch error {
@@ -71,7 +86,7 @@ public class SwiftSwiftCameraPlugin: NSObject, FlutterPlugin {
         if let textureId = textureId {
           self.registrar.textures().unregisterTexture(textureId)
         }
-        
+
         cameraHandler?.stop()
         cameraHandler?.frameReady = nil
         cameraHandler = nil
@@ -80,7 +95,6 @@ public class SwiftSwiftCameraPlugin: NSObject, FlutterPlugin {
       default:
         result(FlutterMethodNotImplemented)
       }
- 
   }
 }
 
@@ -207,7 +221,7 @@ class CameraHandler: NSObject {
 extension CameraHandler: AVCaptureVideoDataOutputSampleBufferDelegate {
 
   func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-    print("Frame received.")
+//    print("Frame received.")
     guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
       //TODO: print error?
       print("Error getting image buffer from CMSamplebuffer.")

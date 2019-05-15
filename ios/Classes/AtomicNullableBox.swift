@@ -19,8 +19,10 @@ public final class AtomicNullableBox<T: AnyObject> {
 
   deinit {
     let oldPtrBits = self.storage.exchange(with: 0xB00DEAD)
-    let oldPtr = Unmanaged<T>.fromOpaque(UnsafeRawPointer(bitPattern: oldPtrBits)!)
-    oldPtr.release()
+    if (oldPtrBits != 0) {
+      let oldPtr = Unmanaged<T>.fromOpaque(UnsafeRawPointer(bitPattern: oldPtrBits)!)
+      oldPtr.release()
+    }
   }
 
   public func compareAndExchange(expected: T?, desired: T?) -> Bool {
